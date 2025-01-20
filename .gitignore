@@ -1,2 +1,4 @@
 .vscode
-genigo.yaml
+/genigo.yaml
+/models
+/build

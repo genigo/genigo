@@ -12,7 +12,6 @@ var DB *sql.DB
 func Connect() error {
 	dbc := config.Conf.DB
 	dbc.Schema = "information_schema"
-
 	db, err := sql.Open("mysql", dbc.String())
 
 	if err != nil {

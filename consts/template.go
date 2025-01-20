@@ -75,9 +75,7 @@ func (opt {{.SingularName}}) GetParent() *goje.Entity {
 //Columns returns list of table columns
 //a helper method for goje.Entity interface
 func (opt {{.SingularName}}) GetColumns() []string {
-	return []string{
-		{{range $ir,$col := .Columns}}"{{$col.Name}}",{{end}}
-	}
+	return {{.SingularName}}Columns
 }
 
 // Delete multiple {{.SingularName}} by queries
@@ -331,7 +329,7 @@ func (opt *{{$.SingularName}}) Load{{camel .FromCol}}{{camel (singular .RefTable
 		return goje.ErrHandlerIsNil
 	}
 
-	if opt.parent != nil && opt.parent.TableName() == "{{.Table.Name}}" {
+	if opt.parent != nil && opt.parent.GetTableName() == "{{.Table.Name}}" {
 		return goje.ErrRecursiveLoad
 	}
 
@@ -359,7 +357,7 @@ func (opt *{{$.SingularName}}) Load{{camel .RefTable}}By{{camel .FromCol}}(Queri
 		return goje.ErrHandlerIsNil
 	}
 
-	if opt.parent != nil && opt.parent.TableName() == "{{.RefTable}}" {
+	if opt.parent != nil && opt.parent.GetTableName() == "{{.RefTable}}" {
 		return goje.ErrRecursiveLoad
 	}
 	Queries = append(Queries, goje.Where("{{.FromCol}} = ?", opt.{{camel .ToCol}}))
