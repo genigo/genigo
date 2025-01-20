@@ -53,7 +53,7 @@ const (
 
 //Tablename returns real table name in the database
 //a helper method for goje.Entity interface
-func (opt {{.SingularName}}) TableName() string {
+func (opt {{.SingularName}}) GetTableName() string {
 	return {{.SingularName}}TableName
 }
 

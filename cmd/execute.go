@@ -14,7 +14,7 @@ import (
 )
 
 func Execute() {
-	conf := flag.String("c", "config.goje.yaml", "Set config path")
+	conf := flag.String("c", "genigo.yaml", "Set config path")
 
 	if len(os.Args) > 1 && strings.ToLower(os.Args[1]) == "init" {
 		initConfig(*conf)
@@ -24,13 +24,13 @@ func Execute() {
 	}
 
 	if len(os.Args) > 1 && strings.Contains(os.Args[1], "ersion") {
-		fmt.Printf("goje Ver(%s) developed by Mahmoud Eskandari.", version.Ver)
+		fmt.Printf("genigo Ver(%s)\n Developed by Mahmoud Eskandari.", version.Ver)
 		return
 	}
 
 	err := config.ReadConfig(*conf)
 	if err != nil {
-		log.Fatalf("Error when reading config: %+v \n **** Run: `goje init` to create a default config file ****", err)
+		log.Fatalf("Error when reading config: %+v \n **** Run: `genigo init` to create a default config file ****\n", err)
 	}
 
 	err = repo.Connect()
