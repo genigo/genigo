@@ -238,8 +238,8 @@ func Get{{.SingularName}}By{{joinCamelCols .Primaries "%s" "And"}}(handler *goje
 
 	var out {{.SingularName}}
 	out.ctx = handler
-	row.Scan({{range $ir,$col := .Columns}}{{if ne $ir 0}},{{end}}&out.{{camel $col.Name}}{{end}})
-	return &out,nil
+	err := row.Scan({{range $ir,$col := .Columns}}{{if ne $ir 0}},{{end}}&out.{{camel $col.Name}}{{end}})
+	return &out, err
 }
 {{end}}
 
