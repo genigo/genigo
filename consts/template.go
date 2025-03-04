@@ -37,8 +37,13 @@ var AfterDelete{{.SingularName}} func(*goje.Context, *{{.SingularName}})
 
 const {{.SingularName}}TableName = "{{.Name}}"
 {{if .Primaries}}const {{.SingularName}}PrimaryKey = "{{joinCols .Primaries "%s" ","}}"{{end}}
+// List of Columns of table
 var {{.SingularName}}Columns = []string{
 	{{range $ir,$col := .Columns}}"{{$col.Name}}",{{end}}
+}
+// List of Columns merged with table name
+var {{.SingularName}}ColumnsWithTable = []string{
+	{{range $ir,$col := .Columns}}"{{$.Name}}.{{$col.Name}}",{{end}}
 }
 
 {{range $ir,$col := .Columns}}{{if and (eq $col.DataType "enum") (eq $col.Nullable 0)}}
@@ -272,7 +277,7 @@ func Get{{camel .Name}}(handler *goje.Context, Queries ...goje.QueryInterface) (
 		return nil, goje.ErrHandlerIsNil
 	}
 	
-	query, args, err := goje.SelectQueryBuilder("{{.Name}}", {{.SingularName}}Columns, Queries)
+	query, args, err := goje.SelectQueryBuilder("{{.Name}}", {{.SingularName}}ColumnsWithTable, Queries)
 	if err != nil {
 		return nil, err
 	}
