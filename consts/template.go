@@ -89,7 +89,7 @@ func Delete{{.SingularName}}Raw(handler *goje.Context, Queries ...goje.QueryInte
 	return handler.RawDelete("{{.Name}}", Queries)
 }
 
-// Insert multiple {{.SingularName}}
+// Insert multiple {{.SingularName}} with INTO
 // This method dosen't support After,Before Triggers ...
 func BulkInsert{{.SingularName}}(handler *goje.Context, entities []{{.SingularName}}) (rowsInserted int64, err error) {
 	rows := make([]map[string]interface{}, len(entities))
@@ -99,6 +99,18 @@ func BulkInsert{{.SingularName}}(handler *goje.Context, entities []{{.SingularNa
 		{{range .Columns}}{{if ne .Default "CURRENT_TIMESTAMP"}}rows[i]["{{.Name}}"] = entities[i].{{camel .Name}}
 		{{end}}{{end}}}
 	return handler.RawBulkInsert("{{.Name}}", rows)
+}
+
+// Insert multiple {{.SingularName}} with IGNORE
+// This method dosen't support After,Before Triggers ...
+func BulkInsertIgnore{{.SingularName}}(handler *goje.Context, entities []{{.SingularName}}) (rowsInserted int64, err error) {
+	rows := make([]map[string]interface{}, len(entities))
+
+	for i := 0; i < len(entities); i++{
+		rows[i] = make(map[string]interface{})
+		{{range .Columns}}{{if ne .Default "CURRENT_TIMESTAMP"}}rows[i]["{{.Name}}"] = entities[i].{{camel .Name}}
+		{{end}}{{end}}}
+	return handler.RawBulkInsertIgnore("{{.Name}}", rows)
 }
 
 {{if .Primary }}
