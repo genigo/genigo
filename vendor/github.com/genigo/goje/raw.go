@@ -1,7 +1,9 @@
 package goje
 
 import (
+	"log"
 	"strings"
+	"time"
 )
 
 // RawDelete Deletes entries with standard query
@@ -12,7 +14,15 @@ func (handler *Context) RawDelete(Tablename string, Queries []QueryInterface) (i
 		return -1, err
 	}
 
+	start := time.Now()
+	// run query
 	res, err := handler.DB.ExecContext(handler.Ctx, query, args...)
+	// log slow queries
+	elapsed := time.Since(start)
+	if SlowQueryLogTimeout > 0 && elapsed > SlowQueryLogTimeout {
+		log.Printf("[SLOW QUERY] took=%s method=RawDelete(Tablename:%s) query=%s\n", elapsed, Tablename, query)
+	}
+
 	if err != nil {
 		return -1, err
 	}
@@ -39,8 +49,15 @@ func (handler *Context) RawUpdate(Tablename string, Cols map[string]any, Queries
 		return -1, err
 	}
 	args = append(args, cargs...)
+	start := time.Now()
 
-	res, err := handler.DB.ExecContext(handler.Ctx, query+strings.Join(items, ",")+conditions, args...)
+	query = query + strings.Join(items, ",") + conditions
+	res, err := handler.DB.ExecContext(handler.Ctx, query, args...)
+	// log slow queries
+	elapsed := time.Since(start)
+	if SlowQueryLogTimeout > 0 && elapsed > SlowQueryLogTimeout {
+		log.Printf("[SLOW QUERY] took=%s method=RawUpdate(Tablename:%s) query=%s\n", elapsed, Tablename, query)
+	}
 	if err != nil {
 		return -1, err
 	}
@@ -102,7 +119,14 @@ func RawBulkInsert(handler *Context, Ignore bool, Tablename string, Rows []map[s
 	values := strings.Repeat(eachRowArgs, len(Rows))
 	values = values[1:]
 
+	start := time.Now()
 	res, err := handler.DB.ExecContext(handler.Ctx, query+"("+strings.Join(columnNames, ",")+") VALUES "+values, args...)
+
+	elapsed := time.Since(start)
+	if SlowQueryLogTimeout > 0 && elapsed > SlowQueryLogTimeout {
+		log.Printf("[SLOW QUERY] took=%s method=RawBulkInsert(Tablename:%s) query=%s\n", elapsed, Tablename, query+"("+strings.Join(columnNames, ",")+") VALUES ...")
+	}
+
 	if err != nil {
 		return -1, err
 	}

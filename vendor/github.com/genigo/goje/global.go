@@ -3,12 +3,16 @@ package goje
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 // Default Database connection that fill by
 var DefatultDB *sql.DB
+
+// Default slow query log threshold = 5s
+var SlowQueryLogTimeout = time.Second * 5
 
 // InitDB Connect default database
 func InitDB(conn *DBConfig) error {

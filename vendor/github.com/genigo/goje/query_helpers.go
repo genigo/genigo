@@ -80,7 +80,7 @@ func Lt(columnName string, argument any) QueryWhere {
 	}
 }
 
-// Lte: (lower equal than) A helper for `column >= ?`
+// Lte: (lower equal than) A helper for `column <= ?`
 func Lte(columnName string, argument any) QueryWhere {
 	return QueryWhere{
 		query: qouteColumn(columnName) + " <= ?",
