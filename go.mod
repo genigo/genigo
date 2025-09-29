@@ -3,7 +3,7 @@ module github.com/genigo/genigo
 go 1.20
 
 require (
-	github.com/genigo/goje v0.1.2
+	github.com/genigo/goje v0.2.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/iancoleman/strcase v0.3.0

@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
-github.com/genigo/goje v0.1.2 h1:8D8etfHmdPqOij/qk68GWXwtlmZ+3HH4lk1Q7RVOobA=
-github.com/genigo/goje v0.1.2/go.mod h1:vtUHo4OJnLbqwvYtE37nwe6Ojh87Bs3jFPjtA2296a4=
+github.com/genigo/goje v0.2.0 h1:0Wy48H+fDsVrJd+gPaKdXrY+wARvH8nDGAVltCWlsYQ=
+github.com/genigo/goje v0.2.0/go.mod h1:vtUHo4OJnLbqwvYtE37nwe6Ojh87Bs3jFPjtA2296a4=
 github.com/gertd/go-pluralize v0.2.1 h1:M3uASbVjMnTsPb0PNqg+E/24Vwigyo/tvyMTtAlLgiA=
 github.com/gertd/go-pluralize v0.2.1/go.mod h1:rbYaKDbsXxmRfr8uygAEKhOWsjyrrqrkHVpZvoOp8zk=
 github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpvNJ1Y=

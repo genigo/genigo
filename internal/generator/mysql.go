@@ -100,10 +100,6 @@ func (t *Table) SetGoDataType(i int) {
 		dt = makeNullable(dt)
 	}
 
-	if strings.Contains(dt, "time.") {
-		t.Imports = append(t.Imports, "time")
-	}
-
 	t.Columns[i].GoDataType = dt
 }
 
