@@ -49,7 +49,14 @@ func Not(columnName string, argument any) QueryWhere {
 }
 
 // FindInSet: A helper for `FIND_IN_SET(?, column) > 0 `
+// On postgres it builds the equivalent `? = ANY(string_to_array(column, ','))`
 func FindInSet(columnName string, argument any) QueryWhere {
+	if IsPostgres() {
+		return QueryWhere{
+			query: "? = ANY(string_to_array(" + qouteColumn(columnName) + ", ','))",
+			args:  []any{argument},
+		}
+	}
 	return QueryWhere{
 		query: " FIND_IN_SET(?, " + qouteColumn(columnName) + ") > 0",
 		args:  []any{argument},

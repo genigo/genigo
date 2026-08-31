@@ -32,6 +32,10 @@ type DBConfig struct {
 }
 
 func (db DBConfig) String() string {
+	if db.Driver == DriverPostgres {
+		return db.postgresString()
+	}
+
 	// Create the base URL structure
 	u := &url.URL{
 		Scheme: "",
@@ -53,4 +57,24 @@ func (db DBConfig) String() string {
 	u.RawQuery = q.Encode()
 
 	return u.String()[2:]
+}
+
+// postgresString builds a postgres:// DSN.
+// Flags pass through as query parameters (sslmode, application_name, ...).
+// pgx negotiates sslmode=prefer when no sslmode flag is set.
+func (db DBConfig) postgresString() string {
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(db.User, db.Password),
+		Host:   fmt.Sprintf("%s:%d", db.Host, db.Port),
+		Path:   "/" + db.Schema,
+	}
+
+	q := url.Values{}
+	for k, v := range db.Flags {
+		q.Set(k, v)
+	}
+	u.RawQuery = q.Encode()
+
+	return u.String()
 }

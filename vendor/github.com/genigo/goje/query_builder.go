@@ -64,7 +64,18 @@ func ArgumentLessQueryBuilder(Action, Tablename string, Columns []string, Querie
 }
 
 // SQLConditionBuilder [JOIN WHERE LIMIT OFFSET] ...builder
+// On the postgres dialect the assembled `?` placeholders are renumbered
+// to $1..$n in statement order.
 func SQLConditionBuilder(Queries []QueryInterface) (string, []any, error) {
+	query, args, err := buildConditions(Queries)
+	if err != nil {
+		return query, args, err
+	}
+	return rebind(query), args, nil
+}
+
+// buildConditions assembles [JOIN WHERE LIMIT OFFSET] fragments with `?` binds
+func buildConditions(Queries []QueryInterface) (string, []any, error) {
 	query := " "
 	var args []any
 	var where []string
@@ -161,7 +172,7 @@ func columnsFilter(in []string) []string {
 	return in
 }
 
-// filter column: add backtik if needed
+// filter column: add identifier quote of the active dialect if needed
 func qouteColumn(input string) string {
 	if strings.Contains(input, "`") ||
 		strings.Contains(input, " ") ||
@@ -196,5 +207,5 @@ func qouteColumn(input string) string {
 		return strings.Join(values, ".")
 	}
 
-	return "`" + input + "`"
+	return string(dialect.Quote) + input + string(dialect.Quote)
 }

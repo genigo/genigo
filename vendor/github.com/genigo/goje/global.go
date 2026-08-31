@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // Default Database connection that fill by
@@ -25,12 +26,15 @@ func InitDB(conn *DBConfig) error {
 }
 
 // NewDBConnection Connect to database and return database
+// It also activates the matching dialect (identifier quoting and
+// placeholder style) for the package level query builders.
 func NewDBConnection(conn *DBConfig) (*sql.DB, error) {
-	if conn.Driver != "mysql" {
-		return nil, ErrUnknownDBDriver
+	driverName, err := resolveDriver(conn.Driver)
+	if err != nil {
+		return nil, err
 	}
 
-	db, err := sql.Open(conn.Driver, conn.String())
+	db, err := sql.Open(driverName, conn.String())
 
 	if err != nil {
 		return nil, err
@@ -42,6 +46,21 @@ func NewDBConnection(conn *DBConfig) (*sql.DB, error) {
 	db.SetConnMaxLifetime(conn.ConnMaxLifetime)
 
 	return db, nil
+}
+
+// resolveDriver maps a DBConfig.Driver value to the database/sql driver
+// name and activates the matching package dialect.
+func resolveDriver(driver string) (string, error) {
+	switch driver {
+	case "", DriverMysql:
+		dialect = MysqlDialect
+		return "mysql", nil
+	case DriverPostgres:
+		dialect = PostgresDialect
+		// pgx/v5 stdlib registers itself under the "pgx" name
+		return "pgx", nil
+	}
+	return "", ErrUnknownDBDriver
 }
 
 // GetHandler make a handler from default database and a TODO context
