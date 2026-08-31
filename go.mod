@@ -1,6 +1,6 @@
 module github.com/genigo/genigo
 
-go 1.25.0
+go 1.26.7
 
 require (
 	github.com/genigo/goje v0.2.3
