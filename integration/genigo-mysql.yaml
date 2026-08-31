@@ -1,0 +1,11 @@
+db:
+  driver: mysql
+  host: 127.0.0.1
+  port: 3307
+  user: root
+  password: genigo
+  schema: genigo_test
+tags: [db, json]
+pkg: models
+dir: ./models-mysql/models
+replace: true

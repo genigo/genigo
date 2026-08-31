@@ -11,7 +11,15 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
+// GetTables introspects the configured database (mysql or postgres)
 func GetTables() map[string]Table {
+	if config.Conf.DB.Driver == "postgres" {
+		return GetTablesPostgres()
+	}
+	return GetTablesMysql()
+}
+
+func GetTablesMysql() map[string]Table {
 
 	rows, err := repo.DB.Query(`SELECT 
 	TABLES.TABLE_NAME,
@@ -68,25 +76,7 @@ func GetTables() map[string]Table {
 	}
 
 	//put relation table addresses
-	for tableName, table := range out {
-		visited := []string{}
-		for relId := 0; relId < len(table.LRelations); relId++ {
-			rel := table.LRelations[relId]
-			key := rel.FromCol + rel.ToCol + rel.RefTable
-			if StringContains(visited, key) > -1 {
-				table.LRelations = RemoveItem(table.LRelations, relId)
-				out[tableName] = table
-				relId--
-				continue
-			}
-			visited = append(visited, key)
-			RelTable, ok := out[rel.RefTable]
-			if !ok {
-				panic(rel.RefTable + " dosen't exists in table list that is needed for relation of " + tableName)
-			}
-			out[tableName].LRelations[relId].Table = &RelTable
-		}
-	}
+	linkRelations(out)
 	return out
 }
 
@@ -95,12 +85,25 @@ func (t *Table) SetGoDataType(i int) {
 	if dt == "decimal.Decimal" {
 		t.Imports = append(t.Imports, "github.com/shopspring/decimal")
 	}
-	if t.Columns[i].Nullable == 1 && dt != "[]byte" {
+	if t.Columns[i].Nullable == 1 && needsNullWrapper(dt) {
 		t.Imports = append(t.Imports, "database/sql")
 		dt = makeNullable(dt)
 	}
 
 	t.Columns[i].GoDataType = dt
+}
+
+// needsNullWrapper reports whether a nullable column needs a sql.Null* wrapper.
+// []byte, slices, interface{} and the goje array types carry NULL natively
+// (nil) and stay bare; on postgres this covers json/jsonb and array columns.
+func needsNullWrapper(dt string) bool {
+	if dt == "[]byte" || dt == "interface{}" {
+		return false
+	}
+	if isPostgres() && (strings.HasPrefix(dt, "[]") || strings.HasPrefix(dt, "goje.")) {
+		return false
+	}
+	return true
 }
 
 func (t *Table) GetIndexes() {
@@ -188,6 +191,10 @@ func (t *Table) GetParents() {
 }
 
 func makeNullable(ctype string) string {
+	// postgres numerics keep their decimal type when nullable
+	if isPostgres() && ctype == "decimal.Decimal" {
+		return "decimal.NullDecimal"
+	}
 	switch ctype {
 	case "string":
 		return "sql.NullString"

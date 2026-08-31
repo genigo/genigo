@@ -1,0 +1,13 @@
+db:
+  driver: postgres
+  host: 127.0.0.1
+  port: 5433
+  user: genigo
+  password: genigo
+  schema: genigo_test
+  flags:
+    sslmode: disable
+tags: [db, json]
+pkg: models
+dir: ./models-postgres/models
+replace: true

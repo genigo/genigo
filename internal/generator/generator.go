@@ -38,6 +38,15 @@ func Generate() error {
 		"structTagExcept": structTagExcept,
 		"imports":         SetImports,
 		"join":            strings.Join,
+		// postgres flavored statements baked into generated code
+		"isPg":                 isPostgres,
+		"pgInsertCall":         pgInsertCall,
+		"pgInsertScan":         pgInsertScan,
+		"pgUpdateStmt":         pgUpdateStmt,
+		"pgDeleteStmt":         pgDeleteStmt,
+		"pgSelectByPKStmt":     pgSelectByPKStmt,
+		"pgSelectByUniqueStmt": pgSelectByUniqueStmt,
+		"pgSkipCol":            pgSkipCol,
 		"isPrimary": func(table string, colName string) bool {
 			for _, pk := range Tables[table].Primaries {
 				if pk.Name == colName {
@@ -143,8 +152,7 @@ func Generate() error {
 func checkDir() error {
 	info, err := os.Stat(config.Conf.Dir)
 	if err != nil {
-		err = os.Mkdir(config.Conf.Dir, os.ModePerm)
-		return err
+		return os.MkdirAll(config.Conf.Dir, os.ModePerm)
 	}
 
 	if !info.IsDir() {

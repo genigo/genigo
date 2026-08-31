@@ -42,13 +42,27 @@ func structTagExcept(Column string, Except string) string {
 	return out
 }
 
+// dictionary returns the active column-type dictionary of the configured driver
+func dictionary() map[string]string {
+	if config.Conf.DB.Driver == "postgres" {
+		return consts.PostgresDicMp
+	}
+	return consts.MysqlDicMp
+}
+
+// isPostgres reports whether generation targets a postgres database
+func isPostgres() bool {
+	return config.Conf.DB.Driver == "postgres"
+}
+
 func goType(ColumnType string, unsigned bool) string {
+	dic := dictionary()
 	if unsigned {
-		if t, ok := consts.MysqlDicMp[ColumnType+" unsigned"]; ok {
+		if t, ok := dic[ColumnType+" unsigned"]; ok {
 			return t
 		}
 	}
-	if t, ok := consts.MysqlDicMp[ColumnType]; ok {
+	if t, ok := dic[ColumnType]; ok {
 		return t
 	}
 	fmt.Print(ColumnType, ",")
@@ -103,7 +117,8 @@ func NonAICols(t Table) []Column {
 }
 
 func (t *Table) Prepare() {
-	if t.PrimaryColType == "string" {
+	// postgres reads generated keys via RETURNING, no strconv conversion needed
+	if t.PrimaryColType == "string" && !isPostgres() {
 		t.Imports = append(t.Imports, "strconv")
 	}
 }
@@ -126,6 +141,30 @@ func StringContains(heyStack []string, needle string) int {
 		}
 	}
 	return -1
+}
+
+// linkRelations resolves LRelations.Table pointers against the full table
+// list and removes duplicate relations (shared by both introspectors)
+func linkRelations(out map[string]Table) {
+	for tableName, table := range out {
+		visited := []string{}
+		for relId := 0; relId < len(table.LRelations); relId++ {
+			rel := table.LRelations[relId]
+			key := rel.FromCol + rel.ToCol + rel.RefTable
+			if StringContains(visited, key) > -1 {
+				table.LRelations = RemoveItem(table.LRelations, relId)
+				out[tableName] = table
+				relId--
+				continue
+			}
+			visited = append(visited, key)
+			RelTable, ok := out[rel.RefTable]
+			if !ok {
+				panic(rel.RefTable + " dosen't exists in table list that is needed for relation of " + tableName)
+			}
+			out[tableName].LRelations[relId].Table = &RelTable
+		}
+	}
 }
 
 func RemoveItem(s []Relation, i int) []Relation {

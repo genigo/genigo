@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: genigo
+          MYSQL_DATABASE: genigo_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pgenigo"
+          --health-interval=3s
+          --health-timeout=3s
+          --health-retries=30
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: genigo
+          POSTGRES_PASSWORD: genigo
+          POSTGRES_DB: genigo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U genigo -d genigo_test"
+          --health-interval=3s
+          --health-timeout=3s
+          --health-retries=30
+
+    env:
+      TEST_MYSQL_DSN: root:genigo@tcp(127.0.0.1:3306)/genigo_test
+      TEST_POSTGRES_DSN: postgres://genigo:genigo@127.0.0.1:5432/genigo_test?sslmode=disable
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # the integration module replaces goje with a sibling checkout
+      - uses: actions/checkout@v4
+        with:
+          repository: genigo/goje
+          path: goje
+          ref: main
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Build
+        run: |
+          go build ./...
+          go vet ./...
+
+      - name: Apply fixtures
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uroot -pgenigo genigo_test < testdata/mysql.sql
+          PGPASSWORD=genigo psql -h 127.0.0.1 -p 5432 -U genigo -d genigo_test -f testdata/postgres.sql
+
+      - name: Unit + golden file tests
+        run: go test -v ./...
+
+      - name: Sync goje into its repository checkout
+        run: cp vendor/github.com/genigo/goje/*.go goje/
+
+      - name: Integration (generated models on both engines)
+        run: |
+          go build -o genigo .
+          cd integration \
+            && ../genigo -c genigo-mysql.yaml \
+            && sed -i 's/3307/3306/; s/5433/5432/' genigo-mysql.yaml genigo-postgres.yaml \
+            && ../genigo -c genigo-mysql.yaml \
+            && ../genigo -c genigo-postgres.yaml \
+            && go test -v ./...

@@ -102,7 +102,7 @@ func BulkInsert{{.SingularName}}(handler *goje.Context, entities []{{.SingularNa
 
 	for i := 0; i < len(entities); i++{
 		rows[i] = make(map[string]interface{})
-		{{range .Columns}}{{if ne .Default "CURRENT_TIMESTAMP"}}rows[i]["{{.Name}}"] = entities[i].{{camel .Name}}
+		{{range .Columns}}{{if and (ne .Default "CURRENT_TIMESTAMP") (not (pgSkipCol .))}}rows[i]["{{.Name}}"] = entities[i].{{camel .Name}}
 		{{end}}{{end}}}
 	return handler.RawBulkInsert("{{.Name}}", rows)
 }
@@ -123,7 +123,7 @@ func BulkInsertIgnore{{.SingularName}}(handler *goje.Context, entities []{{.Sing
 
 	for i := 0; i < len(entities); i++{
 		rows[i] = make(map[string]interface{})
-		{{range .Columns}}{{if ne .Default "CURRENT_TIMESTAMP"}}rows[i]["{{.Name}}"] = entities[i].{{camel .Name}}
+		{{range .Columns}}{{if and (ne .Default "CURRENT_TIMESTAMP") (not (pgSkipCol .))}}rows[i]["{{.Name}}"] = entities[i].{{camel .Name}}
 		{{end}}{{end}}}
 	return handler.RawBulkInsertIgnore("{{.Name}}", rows)
 }
@@ -147,7 +147,7 @@ func (opt *{{.SingularName}}) Delete(handler *goje.Context) error {
 	
 	start := time.Now()
 	// run query
-	_, err := handler.DB.ExecContext(handler.Ctx, ` + "`" + `DELETE FROM {{.Name}} WHERE {{.Primary }}=?` + "`" + `, opt.{{camel .Primary }})
+	_, err := handler.DB.ExecContext(handler.Ctx, {{if isPg}}{{pgDeleteStmt .}}{{else}}` + "`" + `DELETE FROM {{.Name}} WHERE {{.Primary }}=?` + "`" + `, opt.{{camel .Primary }}{{end}})
 	
 	elapsed := time.Since(start)
     if goje.SlowQueryLogTimeout > 0 && elapsed > goje.SlowQueryLogTimeout {
@@ -203,20 +203,23 @@ func (opt *{{.SingularName}}) Insert(handler *goje.Context) error {
 			return err
 		}
 	}
-	{{range .Columns}}
+	{{if not isPg}}{{range .Columns}}
 	{{if eq .Default "CURRENT_TIMESTAMP"}}
 	if opt.{{camel .Name}}.IsZero(){
 		opt.{{camel .Name}} = time.Now()
 	}
 	{{end}}
-	{{end}}
+	{{end}}{{end}}
 
 	start := time.Now()
-	{{if .Primary}}
+	{{if isPg}}
+	row := {{pgInsertCall .}}
+	{{pgInsertScan .}}
+	{{else}}{{if .Primary}}
 	result, err := handler.DB.ExecContext(handler.Ctx, ` + "`" + `INSERT INTO {{.Name}}({{joinCols (NonAICols .) "%s" ","}}) VALUES({{joinCols (NonAICols .) "?" ","}})` + "`" + `,{{joinCamelCols (NonAICols .) "opt.%s" ","}})
 	{{else}}
 	_, err := handler.DB.ExecContext(handler.Ctx, ` + "`" + `INSERT INTO {{.Name}}({{joinCols .Columns "%s" ","}}) VALUES({{joinCols .Columns "?" ","}})` + "`" + `,{{joinCamelCols .Columns "opt.%s" ","}})
-	{{end}}
+	{{end}}{{end}}
 
 	// log slow queries
 	elapsed := time.Since(start)
@@ -227,11 +230,11 @@ func (opt *{{.SingularName}}) Insert(handler *goje.Context) error {
 	if err != nil {
 		return err
 	}
-	{{if ne .Primary ""}}
-	lastId, err := result.LastInsertId() 
+	{{if not isPg}}{{if ne .Primary ""}}
+	lastId, err := result.LastInsertId()
 	if err == nil{
 		opt.{{camel .Primary}} = {{if eq .PrimaryColType "string"}}strconv.Itoa(int(lastId)){{else}}{{.PrimaryColType}}(lastId){{end}}
-	}{{end}}
+	}{{end}}{{end}}
 
 	if AfterInsert{{.SingularName}} != nil {
 		AfterInsert{{.SingularName}}(handler, opt)
@@ -259,7 +262,7 @@ func (opt *{{.SingularName}}) Update(handler *goje.Context) error {
 
 	start := time.Now()
 	// run query
-	_, err := handler.DB.ExecContext(handler.Ctx, "UPDATE {{.Name}} SET {{joinCols (NonPrimaryCols .) "%s=?" ","}} WHERE {{joinCols .Primaries "%s=?" " AND "}}",{{joinCamelCols (NonPrimaryCols .) "opt.%s" ","}},{{joinCamelCols .Primaries "opt.%s" ","}})
+	_, err := handler.DB.ExecContext(handler.Ctx, {{if isPg}}{{pgUpdateStmt .}}{{else}}"UPDATE {{.Name}} SET {{joinCols (NonPrimaryCols .) "%s=?" ","}} WHERE {{joinCols .Primaries "%s=?" " AND "}}",{{joinCamelCols (NonPrimaryCols .) "opt.%s" ","}},{{joinCamelCols .Primaries "opt.%s" ","}}{{end}})
 	// log slow queries
 	elapsed := time.Since(start)
     if goje.SlowQueryLogTimeout > 0 && elapsed > goje.SlowQueryLogTimeout {
@@ -288,7 +291,7 @@ func Get{{.SingularName}}By{{joinCamelCols .Primaries "%s" "And"}}(handler *goje
 	}
 	start := time.Now()
 	// run query
-	row := handler.DB.QueryRowContext(handler.Ctx, "SELECT {{range $ir,$col := .Columns}}{{if ne $ir 0}},{{end}}{{$col.Name}}{{end}} FROM {{.Name}} WHERE {{joinCols .Primaries "%s=?" " AND "}}", {{joinCamelCols .Primaries "%s" ","}})
+	row := handler.DB.QueryRowContext(handler.Ctx, {{if isPg}}{{pgSelectByPKStmt .}}{{else}}"SELECT {{range $ir,$col := .Columns}}{{if ne $ir 0}},{{end}}{{$col.Name}}{{end}} FROM {{.Name}} WHERE {{joinCols .Primaries "%s=?" " AND "}}", {{joinCamelCols .Primaries "%s" ","}}{{end}})
 	// log slow queries
 	elapsed := time.Since(start)
     if goje.SlowQueryLogTimeout > 0 && elapsed > goje.SlowQueryLogTimeout {
@@ -316,7 +319,7 @@ func Get{{$.SingularName}}By{{joinCamelCols $cols "%s" "And"}}(handler *goje.Con
 
 	start := time.Now()
 	// run query
-	row := handler.DB.QueryRowContext(handler.Ctx, "SELECT {{range $ir,$col := $.Columns}}{{if ne $ir 0}},{{end}}{{$col.Name}}{{end}} FROM {{$.Name}} WHERE {{range $ic,$col := $cols}}{{if ne $ic 0}} AND {{end}}{{$col.Name}}=?{{end}}"{{range $cols}}, {{camel .Name}}Arg{{end}})
+	row := handler.DB.QueryRowContext(handler.Ctx, {{if isPg}}{{pgSelectByUniqueStmt $ $cols}}{{else}}"SELECT {{range $ir,$col := $.Columns}}{{if ne $ir 0}},{{end}}{{$col.Name}}{{end}} FROM {{$.Name}} WHERE {{range $ic,$col := $cols}}{{if ne $ic 0}} AND {{end}}{{$col.Name}}=?{{end}}"{{range $cols}}, {{camel .Name}}Arg{{end}}{{end}})
 
 	// log slow queries
 	elapsed := time.Since(start)
