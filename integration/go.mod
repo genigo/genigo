@@ -3,7 +3,7 @@ module github.com/genigo/genigo/integration
 go 1.26.7
 
 require (
-	github.com/genigo/goje v0.2.3
+	github.com/genigo/goje v0.3.0
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/shopspring/decimal v1.4.0
 )

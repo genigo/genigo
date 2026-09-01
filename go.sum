@@ -4,8 +4,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/genigo/goje v0.2.3 h1:opUBhXNU6ClYjPQXR0Mt895/O6YD8rTwVA7NarChi3c=
-github.com/genigo/goje v0.2.3/go.mod h1:Y96ybV5xD9+1tsbopdBGkehlUSMhu1ceV7PVr3O7K6E=
+github.com/genigo/goje v0.3.0 h1:+S3tl85PLttJ9bYs10KL+8t9aOZPnoPGn6094dy1SCQ=
+github.com/genigo/goje v0.3.0/go.mod h1:Y96ybV5xD9+1tsbopdBGkehlUSMhu1ceV7PVr3O7K6E=
 github.com/gertd/go-pluralize v0.2.1 h1:M3uASbVjMnTsPb0PNqg+E/24Vwigyo/tvyMTtAlLgiA=
 github.com/gertd/go-pluralize v0.2.1/go.mod h1:rbYaKDbsXxmRfr8uygAEKhOWsjyrrqrkHVpZvoOp8zk=
 github.com/go-sql-driver/mysql v1.10.0 h1:Q+1LV8DkHJvSYAdR83XzuhDaTykuDx0l6fkXxoWCWfw=
